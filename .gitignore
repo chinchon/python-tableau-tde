@@ -99,3 +99,14 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+
+# dataset
+*.csv
+*.tde
+
+# log files
+*.log
+
+# archive
+archive/
