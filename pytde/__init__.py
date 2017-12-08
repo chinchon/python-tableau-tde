@@ -1,12 +1,11 @@
-from tableausdk import *
-from tableausdk.Extract import *
+from tableausdk.Extract import Row,TableDefinition,ExtractAPI,Extract
+from tableausdk.Types import Type
 import numpy as np
 import pandas as pd
 
 
-# available tableau datatypes
-# INTEGER, DOUBLE, BOOLEAN, DATE, DATETIME, DURATION, 
-# CHAR_STRING, UNICODE_STRING, SPATIAL
+# Tableau datatypes: INTEGER, DOUBLE, BOOLEAN, DATE, DATETIME, 
+# DURATION, CHAR_STRING, UNICODE_STRING, SPATIAL
 mapper = {
     np.dtype(np.int64): {
         'tableau_datatype': Type.INTEGER,
@@ -30,30 +29,27 @@ mapper = {
     },
 }
 
-def tableau_datatype(dtype):
-    return mapper[dtype]['tableau_datatype']
-
 def make_table_definition(df):
     table_definition = TableDefinition()
     for column in df.columns:
         tableau_column = column.title().replace('_',' ')
-        tableau_dtype = tableau_datatype(df[column].dtype)
+        tableau_dtype = mapper[df[column].dtype]['tableau_datatype']
         table_definition.addColumn(tableau_column,tableau_dtype)
     return table_definition
 
 def dedup_column_name(df):
     # rename duplicate columns (https://stackoverflow.com/questions/24685012/pandas-dataframe-renaming-multiple-identically-named-columns)
+    # I don't understand how it's done either
     cols=pd.Series(df.columns)
     for dup in df.columns.get_duplicates(): cols[df.columns.get_loc(dup)]=[dup+'_'+str(d_idx) if d_idx!=0 else dup for d_idx in range(df.columns.get_loc(dup).sum())]
     df.columns=cols
     return df
 
 def to_tde(df,tde_filename = 'extract.tde'):
-    df = dedup_column_name(df)
-    
     ExtractAPI.initialize()
     new_extract = Extract(tde_filename)
     
+    df = dedup_column_name(df)
     table_definition = make_table_definition(df)
     new_table = new_extract.addTable('Extract', table_definition)
     

@@ -1,8 +1,5 @@
-from pytde import to_tde
+import pytde
 import pandas as pd
 
-
 df = pd.read_csv("dataset.csv")
-
-
-to_tde(df)
+pytde.to_tde(df,'extract.tde')
