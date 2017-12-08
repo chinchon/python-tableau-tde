@@ -1,4 +1,4 @@
-from pytde import *
+from pytde import to_tde
 import pandas as pd
 
 
