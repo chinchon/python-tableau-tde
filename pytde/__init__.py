@@ -20,7 +20,7 @@ mapper = {
     np.dtype('O'): {
         'tableau_datatype': Type.UNICODE_STRING,
         'tableau_set_function':Row.setString,
-        'value_modifier': lambda x: [unicode(x, errors='replace')] if x else None,
+        'value_modifier': lambda x: [unicode(str(x), errors='replace')] if x else None,
     },
     np.dtype('<M8[ns]'): {
         'tableau_datatype': Type.DATETIME,
