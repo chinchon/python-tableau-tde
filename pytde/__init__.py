@@ -24,6 +24,12 @@ mapper = {
         #'value_modifier': lambda x: [unicode(x, errors='replace')] if x else None,
         'value_modifier': lambda x: [str(x)] if x else None,
     },
+    np.dtype('bool'): {
+        'tableau_datatype': Type.BOOLEAN,
+        'tableau_set_function':Row.setBoolean,
+        #'value_modifier': lambda x: [unicode(x, errors='replace')] if x else None,
+        'value_modifier': lambda x: [x] if x else None,
+    },
     np.dtype('<M8[ns]'): {
         'tableau_datatype': Type.DATETIME,
         'tableau_set_function':Row.setDateTime,
