@@ -3,6 +3,7 @@ from tableausdk.Extract import Row,TableDefinition,ExtractAPI,Extract
 from tableausdk.Types import Type
 import numpy as np
 import pandas as pd
+import os
 
 
 # Tableau datatypes: INTEGER, DOUBLE, BOOLEAN, DATE, DATETIME, 
@@ -55,7 +56,11 @@ def dedup_column_name(df):
 
 def to_tde(df,tde_filename = 'extract.tde'):
     ExtractAPI.initialize()
-    new_extract = Extract(tde_filename)
+    try:  
+        new_extract = Extract(tde_filename)
+    except:
+        os.system('del ' + tde_filename)
+        new_extract = Extract(tde_filename)
     
     df = dedup_column_name(df)
     table_definition = make_table_definition(df)
