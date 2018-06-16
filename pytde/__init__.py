@@ -3,6 +3,7 @@ from tableausdk.Extract import Row,TableDefinition,ExtractAPI,Extract
 from tableausdk.Types import Type
 import numpy as np
 import pandas as pd
+import os
 
 
 # Tableau datatypes: INTEGER, DOUBLE, BOOLEAN, DATE, DATETIME, 
@@ -23,6 +24,12 @@ mapper = {
         'tableau_set_function':Row.setString,
         #'value_modifier': lambda x: [unicode(x, errors='replace')] if x else None,
         'value_modifier': lambda x: [str(x)] if x else None,
+    },
+    np.dtype('bool'): {
+        'tableau_datatype': Type.BOOLEAN,
+        'tableau_set_function':Row.setBoolean,
+        #'value_modifier': lambda x: [unicode(x, errors='replace')] if x else None,
+        'value_modifier': lambda x: [x] if x else None,
     },
     np.dtype('<M8[ns]'): {
         'tableau_datatype': Type.DATETIME,
@@ -48,6 +55,8 @@ def dedup_column_name(df):
     return df
 
 def to_tde(df,tde_filename = 'extract.tde'):
+    if os.path.isfile(tde_filename):
+        os.remove(tde_filename)
     ExtractAPI.initialize()
     new_extract = Extract(tde_filename)
     
