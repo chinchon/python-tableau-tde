@@ -55,12 +55,10 @@ def dedup_column_name(df):
     return df
 
 def to_tde(df,tde_filename = 'extract.tde'):
+    if os.path.isfile(tde_filename):
+        os.remove(tde_filename)
     ExtractAPI.initialize()
-    try:  
-        new_extract = Extract(tde_filename)
-    except:
-        os.system('del ' + tde_filename)
-        new_extract = Extract(tde_filename)
+    new_extract = Extract(tde_filename)
     
     df = dedup_column_name(df)
     table_definition = make_table_definition(df)
