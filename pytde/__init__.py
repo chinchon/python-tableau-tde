@@ -4,6 +4,8 @@ from tableausdk.Types import Type
 import numpy as np
 import pandas as pd
 import os
+import tqdm
+import datetime
 
 
 # Tableau datatypes: INTEGER, DOUBLE, BOOLEAN, DATE, DATETIME, 
@@ -61,21 +63,62 @@ def to_tde(df,tde_filename = 'extract.tde'):
     new_extract = Extract(tde_filename)
     
     df = dedup_column_name(df)
+    row_cnt, col_cnt = df.shape
+    list_dtypes = df.dtypes
+
     table_definition = make_table_definition(df)
     new_table = new_extract.addTable('Extract', table_definition)
     
-    for row in df.iterrows():
+    # for j, row in df.iterrows():
+    for j, row in tqdm.tqdm(df.iterrows(), total=row_cnt):
         new_row = Row(table_definition)
-        for i,column in enumerate(df.columns):
-            column_data_type = df[column].dtype
-            value = mapper[column_data_type]['value_modifier'](row[1][i])
-                
+        for i, (cell, column_data_type) in enumerate(zip(row, list_dtypes)):
+            value = mapper[column_data_type]['value_modifier'](cell)
             if value:
-                params = [new_row,i]+value
+                params = [new_row, i] + value
                 mapper[column_data_type]['tableau_set_function'](*params)
 
+#        for i,column in enumerate(df.columns):
+#            column_data_type = df[column].dtype
+#            value = mapper[column_data_type]['value_modifier'](row[1][i])
+#                
+#            if value:
+#                params = [new_row,i]+value
+#                mapper[column_data_type]['tableau_set_function'](*params)
+#
         new_table.insert(new_row)
         
     new_extract.close()
     ExtractAPI.cleanup()
 
+def to_tde_new(df, tde_filepath, showProgress=True):
+
+    # try to use apply to test how it speeds up.
+    # apply is a little faster than iterrows(), about 1.5x 
+    # testing by my dataset which contains 100000 rows and 25 cols
+
+    if os.path.isfile(tde_filepath):
+        os.remove(tde_filepath)
+    ExtractAPI.initialize()
+    new_extract = Extract(tde_filepath)
+
+    df = dedup_column_name(df)
+    row_cnt, col_cnt = df.shape
+    list_dtypes = df.dtypes
+    table_definition = make_table_definition(df)
+    new_table = new_extract.addTable('Extract', table_definition)
+
+    def insert_tde(x):
+        new_row = Row(table_definition)
+        for i, (cell, column_data_type) in enumerate(zip(x, list_dtypes)):
+            value = mapper[column_data_type]['value_modifier'](cell)
+            if value:
+                params = [new_row, i] + value
+                mapper[column_data_type]['tableau_set_function'](*params)
+
+        new_table.insert(new_row)
+
+    tqdm.tqdm.pandas(desc='My bar!')
+    df.progress_apply(insert_tde, axis=1)
+    new_extract.close()
+    ExtractAPI.cleanup()
