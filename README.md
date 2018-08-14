@@ -17,3 +17,7 @@ df = pd.read_csv("dataset.csv")
 pytde.to_tde(df,"extract.tde")
 ```
 
+### New
+1. Python3.5 works OK, with Tableau-SDK-PYTHON-64Bit-10-3-13.tar  
+2. Use zip in inner loop, speed up 6 times.   
+3. Use apply to to take part of outter loop(iterrows), speed up 1.5 time.   
