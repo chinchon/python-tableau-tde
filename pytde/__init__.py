@@ -8,7 +8,7 @@ import tqdm
 import datetime
 
 
-# Tableau datatypes: INTEGER, DOUBLE, BOOLEAN, DATE, DATETIME, 
+# Tableau datatypes: INTEGER, DOUBLE, BOOLEAN, DATE, DATETIME,
 # DURATION, CHAR_STRING, UNICODE_STRING, SPATIAL
 mapper = {
     np.dtype(np.int64): {
@@ -49,26 +49,36 @@ def make_table_definition(df):
     return table_definition
 
 def dedup_column_name(df):
-    # rename duplicate columns (https://stackoverflow.com/questions/24685012/pandas-dataframe-renaming-multiple-identically-named-columns)
-    # I don't understand how it's done either
-    cols=pd.Series(df.columns)
-    for dup in df.columns.get_duplicates(): cols[df.columns.get_loc(dup)]=[dup+'_'+str(d_idx) if d_idx!=0 else dup for d_idx in range(df.columns.get_loc(dup).sum())]
-    df.columns=cols
+    import itertools
+    cols = pd.Series(df.columns)
+
+    def zip_numbers(l):
+        al = [str(i) for i in range(1, len(df.columns)+1)]
+        return ['_'.join(i) for i in zip(l, al)] if len(l) > 1 else l
+
+    df.columns = [j for _, i in itertools.groupby(cols) for j in zip_numbers(list(i))]
     return df
+
+# rename duplicate columns (https://stackoverflow.com/questions/24685012/pandas-dataframe-renaming-multiple-identically-named-columns)
+# def dedup_column_name(df):
+#    cols=pd.Series(df.columns)
+#    for dup in df.columns.get_duplicates(): cols[df.columns.get_loc(dup)]=[dup+'_'+str(d_idx) if d_idx!=0 else dup for d_idx in range(df.columns.get_loc(dup).sum())]
+#    df.columns=cols
+#    return df
 
 def to_tde(df,tde_filename = 'extract.tde'):
     if os.path.isfile(tde_filename):
         os.remove(tde_filename)
     ExtractAPI.initialize()
     new_extract = Extract(tde_filename)
-    
+
     df = dedup_column_name(df)
     row_cnt, col_cnt = df.shape
     list_dtypes = df.dtypes
 
     table_definition = make_table_definition(df)
     new_table = new_extract.addTable('Extract', table_definition)
-    
+
     # for j, row in df.iterrows():
     for j, row in tqdm.tqdm(df.iterrows(), total=row_cnt):
         new_row = Row(table_definition)
@@ -81,20 +91,20 @@ def to_tde(df,tde_filename = 'extract.tde'):
 #        for i,column in enumerate(df.columns):
 #            column_data_type = df[column].dtype
 #            value = mapper[column_data_type]['value_modifier'](row[1][i])
-#                
+#
 #            if value:
 #                params = [new_row,i]+value
 #                mapper[column_data_type]['tableau_set_function'](*params)
 #
         new_table.insert(new_row)
-        
+
     new_extract.close()
     ExtractAPI.cleanup()
 
 def to_tde_new(df, tde_filepath, showProgress=True):
 
     # try to use apply to test how it speeds up.
-    # apply is a little faster than iterrows(), about 1.5x 
+    # apply is a little faster than iterrows(), about 1.5x
     # testing by my dataset which contains 100000 rows and 25 cols
 
     if os.path.isfile(tde_filepath):
